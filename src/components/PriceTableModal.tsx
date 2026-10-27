@@ -5,7 +5,7 @@ interface PriceTableModalProps {
 }
 
 const prices = [
-  { city: 'Santo Amaro da Imperatriz', fee: 'R$ 10,00', description: 'Taxa única para a região' },
+  { city: 'Santo Amaro da Imperatriz', fee: 'R$ 8,00', description: 'Taxa única para a região' },
   { city: 'Palhoça', fee: 'A partir de R$ 13,00', description: 'Consulte o bairro no cadastro do pedido' },
   { city: 'São José', fee: 'A partir de R$ 18,00', description: 'Consulte o bairro no cadastro do pedido' },
   { city: 'Florianópolis', fee: 'A partir de R$ 22,00', description: 'Consulte o bairro no cadastro do pedido' },

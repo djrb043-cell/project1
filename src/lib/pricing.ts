@@ -7,8 +7,12 @@ export interface NeighborhoodOption {
 export const CITIES = ['Santo Amaro da Imperatriz', 'Palhoça', 'São José', 'Florianópolis'] as const;
 export type City = typeof CITIES[number];
 
+export const FREE_TEXT_CITIES: Record<string, number | null> = {
+  'Santo Amaro da Imperatriz': 8,
+  'Florianópolis': null,
+};
+
 export const neighborhoods: NeighborhoodOption[] = [
-  { label: 'Centro', city: 'Santo Amaro da Imperatriz', fee: 10 },
   { label: 'Alto Arirú', city: 'Palhoça', fee: 13 },
   { label: 'Arirú', city: 'Palhoça', fee: 13 },
   { label: 'Arirú da Formiga', city: 'Palhoça', fee: 13 },
@@ -67,26 +71,6 @@ export const neighborhoods: NeighborhoodOption[] = [
   { label: 'Pedregal', city: 'São José', fee: 28 },
   { label: 'Real Parque', city: 'São José', fee: 28 },
   { label: 'Colônia Santana', city: 'São José', fee: 32 },
-  { label: 'Centro', city: 'Florianópolis', fee: 22 },
-  { label: 'Trindade', city: 'Florianópolis', fee: 25 },
-  { label: 'Coqueiros', city: 'Florianópolis', fee: 22 },
-  { label: 'Agronômica', city: 'Florianópolis', fee: 25 },
-  { label: 'Campeche', city: 'Florianópolis', fee: 35 },
-  { label: 'Cacupé', city: 'Florianópolis', fee: 30 },
-  { label: 'Carianos', city: 'Florianópolis', fee: 30 },
-  { label: 'Carvoeira', city: 'Florianópolis', fee: 25 },
-  { label: 'Corrego Grande', city: 'Florianópolis', fee: 25 },
-  { label: 'Costeira do Pirajubaé', city: 'Florianópolis', fee: 35 },
-  { label: 'Estreito', city: 'Florianópolis', fee: 22 },
-  { label: 'Itacorubi', city: 'Florianópolis', fee: 30 },
-  { label: 'João Paulo', city: 'Florianópolis', fee: 30 },
-  { label: 'Monte Verde', city: 'Florianópolis', fee: 25 },
-  { label: 'Pantanal', city: 'Florianópolis', fee: 30 },
-  { label: 'Praia da Joaquina', city: 'Florianópolis', fee: 35 },
-  { label: 'Saco dos Limões', city: 'Florianópolis', fee: 25 },
-  { label: 'Santa Mônica', city: 'Florianópolis', fee: 28 },
-  { label: 'São José', city: 'Florianópolis', fee: 25 },
-  { label: 'Tapera', city: 'Florianópolis', fee: 35 },
 ];
 
 export const PAYMENT_LABELS: Record<string, string> = {

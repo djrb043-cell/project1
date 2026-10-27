@@ -66,10 +66,10 @@ export default function LojistaDashboard() {
     const storeName = profile?.store_name ?? 'Loja';
     const lines = orders.map((o, i) => {
       const fee = o.fee != null ? formatCurrency(o.fee) : 'A consultar';
-      return `\u{1F4E6} Pedido ${i + 1}: ${o.client_name}\n\u{1F4CD} ${o.address}\n\u{1F3D9}\uFE0F ${o.neighborhood} \u2014 ${o.city}\n\u{1F4B0} Taxa: ${fee} | ${PAYMENT_LABELS[o.payment_method] ?? o.payment_method}\n\u{1F6F5} Contato: ${o.client_whatsapp}${o.notes ? `\n\u{1F4DD} ${o.notes}` : ''}`;
+      return `📦 Pedido ${i + 1}: ${o.client_name}\n📍 ${o.address}\n🏖️ ${o.neighborhood} — ${o.city}\n💰 Taxa: ${fee} | ${PAYMENT_LABELS[o.payment_method] ?? o.payment_method}\n📱 Contato: ${o.client_whatsapp}${o.notes ? `\n📝 ${o.notes}` : ''}`;
     }).join('\n\n');
     const total = orders.reduce((s, o) => s + (o.fee ?? 0), 0);
-    const text = `\u{1F6F5} *LISTA DE PEDIDOS \u2014 ${storeName}*\n\u{1F4C5} ${dateLabel}\n${'\u2500'.repeat(30)}\n\n${lines}\n\n${'\u2500'.repeat(30)}\n\u{1F4E6} Total: ${orders.length} pedido(s)\n\u{1F4B5} Total taxas: ${formatCurrency(total)}`;
+    const text = `🛵 *LISTA DE PEDIDOS — ${storeName}*\n📅 ${dateLabel}\n${'─'.repeat(30)}\n\n${lines}\n\n${'─'.repeat(30)}\n📦 Total: ${orders.length} pedido(s)\n💵 Total taxas: ${formatCurrency(total)}`;
     window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank');
   }
 
