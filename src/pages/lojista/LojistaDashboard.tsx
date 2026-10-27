@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Package, Table2, RefreshCw, MessageSquare, Trash2, MessageCircle, Filter, Calendar, ClipboardList, CheckCircle2 } from 'lucide-react';
+import { Package, Table2, RefreshCw, MessageSquare, Trash2, MessageCircle, Filter, Calendar, ClipboardList, CircleCheck as CheckCircle2 } from 'lucide-react';
 import Header from '@/components/Header';
 import CutoffBanner from '@/components/CutoffBanner';
 import PriceTableModal from '@/components/PriceTableModal';
@@ -32,20 +32,14 @@ export default function LojistaDashboard() {
   const fetchOrders = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const today = todayISO();
-    const start = tab === 'hoje' ? today : filterDateStart;
-    const end = tab === 'hoje' ? today : filterDateEnd;
-    let q = supabase
+    const { data, error } = await supabase
       .from('orders')
       .select('*')
       .eq('store_id', user.id)
       .order('created_at', { ascending: true });
-    if (start) q = q.gte('created_at', `${start}T00:00:00`);
-    if (end) q = q.lte('created_at', `${end}T23:59:59`);
-    const { data, error } = await q;
     if (!error && data) setOrders(data as Order[]);
     setLoading(false);
-  }, [user, tab, filterDateStart, filterDateEnd]);
+  }, [user]);
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
@@ -96,9 +90,15 @@ export default function LojistaDashboard() {
   }
 
   const openOrders = orders.filter(order => !order.collected_at);
-  const closedOrders = orders.filter(order => Boolean(order.collected_at));
+  const closedOrders = orders.filter(order => Boolean(order.collected_at) && !order.delivered_at);
+  const historyOrders = orders.filter(order => {
+    if (!order.delivered_at) return false;
+    const deliveredDate = order.delivered_at.slice(0, 10);
+    return deliveredDate >= filterDateStart && deliveredDate <= filterDateEnd;
+  });
+  const visibleOrders = tab === 'historico' ? historyOrders : openOrders;
   const pendingCount = openOrders.filter(o => o.status === 'pendente').length;
-  const totalFee = orders.reduce((s, o) => s + (o.fee ?? 0), 0);
+  const totalFee = visibleOrders.reduce((s, o) => s + (o.fee ?? 0), 0);
 
   return (
     <div className="min-h-screen bg-purple-50 dark:bg-gray-950 transition-colors duration-300">
@@ -166,7 +166,7 @@ export default function LojistaDashboard() {
               <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                 {tab === 'hoje' ? 'Pedidos de Hoje (aberto)' : 'Histórico de Pedidos'}
               </h3>
-              <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">{tab === 'hoje' ? openOrders.length : orders.length}</span>
+              <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">{visibleOrders.length}</span>
             </div>
             {tab === 'historico' ? (
               <div className="flex items-center gap-2">
@@ -181,7 +181,7 @@ export default function LojistaDashboard() {
             )}
           </div>
           {loading ? <LoadingSpinner /> : tab === 'historico' ? (
-            orders.length === 0 ? <EmptyOrders message="Nenhum pedido neste período." /> : <OrderRows orders={orders} onDelete={deleteOrder} deletingId={deletingId} showDelete={false} />
+            historyOrders.length === 0 ? <EmptyOrders message="Nenhuma entrega neste período." /> : <OrderRows orders={historyOrders} onDelete={deleteOrder} deletingId={deletingId} showDelete={false} />
           ) : (
             openOrders.length === 0 ? <EmptyOrders message="Nenhum pedido aberto hoje." hint="Cadastre um pedido ou confira os pedidos fechados abaixo." /> : <OrderRows orders={openOrders} onDelete={deleteOrder} deletingId={deletingId} showDelete />
           )}
@@ -211,7 +211,7 @@ export default function LojistaDashboard() {
           </div>
         )}
 
-        {tab === 'historico' && <OrderAnalytics orders={orders} title="Seus pedidos no período" />}
+        {tab === 'historico' && <OrderAnalytics orders={historyOrders} title="Suas entregas no período" />}
       </div>
       {showPriceTable && <PriceTableModal onClose={() => setShowPriceTable(false)} />}
     </div>
@@ -244,6 +244,7 @@ function OrderRows({ orders, onDelete, deletingId, showDelete }: OrderRowsProps)
             </div>
             {order.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{order.notes}</p>}
             {order.sent_to_giroloc && <p className="text-xs text-green-700 dark:text-green-400 mt-1 font-medium">Lista enviada!</p>}
+            {order.delivered_at && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Entregue em: {new Date(order.delivered_at).toLocaleString('pt-BR')}</p>}
             {order.received_by && <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">Recebido por: {order.received_by}</p>}
           </div>
           {showDelete && (

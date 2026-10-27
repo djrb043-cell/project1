@@ -39,6 +39,7 @@ export interface Order {
   sent_to_giroloc: boolean;
   collected_at: string | null;
   collected_by: string | null;
+  delivered_at: string | null;
   floripa_distance_km: number | null;
   notes: string | null;
   created_at: string;
