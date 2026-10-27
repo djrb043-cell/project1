@@ -8,6 +8,10 @@
     "update-user-password": {
       "hasChanged": false,
       "hash": "9a85d4bbfea1b8d1b9d9662ace5cd56982007e4d28c6b6d8792b482f93c4bf85"
+    },
+    "bootstrap-admin": {
+      "hasChanged": false,
+      "hash": "1278b4dca0382d677c654a1267a10d56b28b99a1004056552425aaa73f937cba"
     }
   }
 }

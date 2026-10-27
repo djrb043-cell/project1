@@ -12,6 +12,11 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showBootstrap, setShowBootstrap] = useState(false);
+  const [bootstrapPassword, setBootstrapPassword] = useState('');
+  const [bootstrapLoading, setBootstrapLoading] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState('');
+  const [bootstrapSuccess, setBootstrapSuccess] = useState('');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -20,6 +25,37 @@ export default function Login() {
     const err = await signIn(email, password);
     setLoading(false);
     if (err) setError('E-mail ou senha incorretos. Verifique seus dados.');
+  }
+
+  async function handleBootstrap(e: FormEvent) {
+    e.preventDefault();
+    setBootstrapError('');
+    setBootstrapSuccess('');
+    if (bootstrapPassword.length < 8) {
+      setBootstrapError('Use uma senha com pelo menos 8 caracteres.');
+      return;
+    }
+    setBootstrapLoading(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bootstrap-admin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'robsonjds1003@gmail.com', password: bootstrapPassword }),
+      });
+      const result = await response.json() as { error?: string; success?: boolean };
+      if (!response.ok || !result.success) {
+        setBootstrapError(result.error ?? 'Não foi possível criar a conta.');
+        return;
+      }
+      setEmail('robsonjds1003@gmail.com');
+      setPassword(bootstrapPassword);
+      setBootstrapPassword('');
+      setBootstrapSuccess('Conta criada. Agora você pode entrar com sua senha.');
+    } catch {
+      setBootstrapError('Não foi possível conectar ao serviço de cadastro.');
+    } finally {
+      setBootstrapLoading(false);
+    }
   }
 
   return (
@@ -124,9 +160,29 @@ export default function Login() {
                 ) : 'Entrar'}
               </button>
 
-              <p className="text-xs text-center text-gray-400 dark:text-gray-500 pt-2">
+                  <p className="text-xs text-center text-gray-400 dark:text-gray-500 pt-2">
                 Não possui conta? Solicite ao administrador.
               </p>
+
+              <button type="button" onClick={() => { setShowBootstrap(v => !v); setBootstrapError(''); setBootstrapSuccess(''); }} className="text-xs text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-200 font-medium transition">
+                Primeiro acesso administrativo
+              </button>
+
+              {showBootstrap && (
+                <form onSubmit={handleBootstrap} className="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 p-4 flex flex-col gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Criar conta de administrador</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cadastro temporário para o primeiro acesso.</p>
+                  </div>
+                  <input value="robsonjds1003@gmail.com" readOnly className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2.5 text-sm bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300" />
+                  <input type="password" required minLength={8} value={bootstrapPassword} onChange={e => setBootstrapPassword(e.target.value)} placeholder="Crie uma senha" className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-800" />
+                  {bootstrapError && <p className="text-xs text-red-700 dark:text-red-400">{bootstrapError}</p>}
+                  {bootstrapSuccess && <p className="text-xs text-green-700 dark:text-green-400">{bootstrapSuccess}</p>}
+                  <button type="submit" disabled={bootstrapLoading} className="w-full bg-purple-700 hover:bg-purple-600 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg transition">
+                    {bootstrapLoading ? 'Criando conta…' : 'Criar conta'}
+                  </button>
+                </form>
+              )}
             </form>
           </div>
 
