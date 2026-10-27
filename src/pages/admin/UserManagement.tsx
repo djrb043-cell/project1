@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, UserX, UserCheck, X, AlertCircle, Store, RefreshCw, KeyRound } from 'lucide-react';
+import { Plus, UserX, UserCheck, X, AlertCircle, Store, RefreshCw, KeyRound, ShieldCheck } from 'lucide-react';
 import { supabase, Profile } from '@/lib/supabase';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -11,6 +11,11 @@ export default function UserManagement() {
   const [creating, setCreating] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [showAdminForm, setShowAdminForm] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminCreating, setAdminCreating] = useState(false);
+  const [adminError, setAdminError] = useState('');
+  const [adminSuccess, setAdminSuccess] = useState('');
 
   const [pwModalUser, setPwModalUser] = useState<Profile | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -62,6 +67,31 @@ export default function UserManagement() {
     }
     setFormSuccess(`Loja "${form.store_name}" criada com sucesso!`);
     setForm({ store_name: '', email: '', password: '' });
+    fetchProfiles();
+  }
+
+  async function createAdmin() {
+    setAdminError('');
+    setAdminSuccess('');
+    if (!adminPassword.trim()) {
+      setAdminError('Digite uma senha para a conta de administrador.');
+      return;
+    }
+    setAdminCreating(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-store-user`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+      body: JSON.stringify({ email: 'robsonjds1003@gmail.com', password: adminPassword, role: 'admin' }),
+    });
+    const json = await res.json();
+    setAdminCreating(false);
+    if (!res.ok || json.error) {
+      setAdminError(json.error ?? 'Não foi possível criar a conta de administrador.');
+      return;
+    }
+    setAdminPassword('');
+    setAdminSuccess('Conta de administrador criada ou atualizada com sucesso.');
     fetchProfiles();
   }
 
@@ -117,6 +147,13 @@ export default function UserManagement() {
             <RefreshCw size={15} />
           </button>
           <button
+            onClick={() => { setShowAdminForm(v => !v); setAdminError(''); setAdminSuccess(''); }}
+            className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition"
+          >
+            <ShieldCheck size={15} />
+            Criar Conta de Administrador
+          </button>
+          <button
             onClick={() => { setShowForm(v => !v); setFormError(''); setFormSuccess(''); }}
             className="flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white transition"
           >
@@ -125,6 +162,32 @@ export default function UserManagement() {
           </button>
         </div>
       </div>
+
+      {showAdminForm && (
+        <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 rounded-xl p-5 mb-6">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-semibold text-gray-900 dark:text-white">Criar Conta de Administrador</h3>
+            <button onClick={() => setShowAdminForm(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Esta tela temporária cria a conta GiroLoc no Authentication e no perfil de administrador.</p>
+          {adminError && <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2.5 mb-4"><AlertCircle size={15} /> {adminError}</div>}
+          {adminSuccess && <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2.5 mb-4">{adminSuccess}</div>}
+          <div className="grid sm:grid-cols-2 gap-3 mb-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">E-mail</label>
+              <input value="robsonjds1003@gmail.com" readOnly className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2.5 text-sm bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Senha</label>
+              <input type="password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Senha do administrador" className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-700" />
+            </div>
+          </div>
+          <button onClick={createAdmin} disabled={adminCreating} className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-purple-700 hover:bg-purple-600 disabled:opacity-60 text-white text-sm font-semibold transition">
+            {adminCreating ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ShieldCheck size={15} />}
+            Criar Conta
+          </button>
+        </div>
+      )}
 
       {/* Create form */}
       {showForm && (

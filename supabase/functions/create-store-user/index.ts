@@ -49,8 +49,8 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const { email, password, store_name } = await req.json();
-    if (!email || !password || !store_name) {
+    const { email, password, store_name, role = "lojista" } = await req.json();
+    if (!email || !password || (role !== "admin" && !store_name)) {
       return new Response(JSON.stringify({ error: "email, password, and store_name are required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -71,7 +71,26 @@ Deno.serve(async (req: Request) => {
 
     let userId: string;
 
-    if (createError && createError.message.includes("weak")) {
+    if (createError && /already registered|already exists|duplicate/i.test(createError.message)) {
+      const { data: existing, error: existingError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+      if (existingError || !existing.user) {
+        return new Response(JSON.stringify({ error: existingError?.message ?? "Failed to find existing user" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(existing.user.id, {
+        password,
+        email_confirm: true,
+      });
+      if (updateError) {
+        return new Response(JSON.stringify({ error: updateError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = existing.user.id;
+    } else if (createError && createError.message.includes("weak")) {
       // Supabase rejected the password as "weak" — create with a temp password
       // then set the real one directly via the set_user_password RPC
       const { data: tempUser, error: tempError } = await supabaseAdmin.auth.admin.createUser({
@@ -107,13 +126,13 @@ Deno.serve(async (req: Request) => {
     }
 
     // Create the profile
-    const { error: insertError } = await supabaseAdmin.from("profiles").insert({
+    const { error: insertError } = await supabaseAdmin.from("profiles").upsert({
       id: userId,
       email,
-      role: "lojista",
-      store_name,
+      role,
+      store_name: role === "admin" ? null : store_name,
       active: true,
-    });
+    }, { onConflict: "id" });
 
     if (insertError) {
       // Rollback: delete the auth user

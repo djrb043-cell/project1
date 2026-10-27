@@ -3,15 +3,11 @@
   "functions": {
     "create-store-user": {
       "hasChanged": false,
-      "hash": "7c436cbdf55e8b6603218a9466cd1d4de101da18e07463df99f735ee70205cea"
+      "hash": "f252cfee15e480f7cd6694c4711ed843cd0ebf764c742f3ba4480b252de1d047"
     },
     "update-user-password": {
       "hasChanged": false,
       "hash": "9a85d4bbfea1b8d1b9d9662ace5cd56982007e4d28c6b6d8792b482f93c4bf85"
-    },
-    "create-admin-user": {
-      "hasChanged": false,
-      "hash": "3a9588d48ca6aea68116f3aeae92d511c77e956b508cd2ced8d9bafc9272a9c0"
     }
   }
 }
