@@ -1,0 +1,13 @@
+{
+  "projectId": "72440558",
+  "functions": {
+    "create-store-user": {
+      "hasChanged": false,
+      "hash": "7c436cbdf55e8b6603218a9466cd1d4de101da18e07463df99f735ee70205cea"
+    },
+    "update-user-password": {
+      "hasChanged": false,
+      "hash": "9a85d4bbfea1b8d1b9d9662ace5cd56982007e4d28c6b6d8792b482f93c4bf85"
+    }
+  }
+}

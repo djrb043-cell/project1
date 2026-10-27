@@ -1,0 +1,22 @@
+{
+  "name": "GiroLoc",
+  "short_name": "GiroLoc",
+  "description": "Plataforma de Entregas Locais",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#4B0082",
+  "theme_color": "#4B0082",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo-giroloc.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-giroloc.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
