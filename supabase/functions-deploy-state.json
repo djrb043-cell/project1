@@ -1,13 +1,9 @@
 {
   "projectId": "72441844",
   "functions": {
-    "bootstrap-admin": {
-      "hasChanged": false,
-      "hash": "6927d17e67dfea1fd98e2d0d68c494f789a30e3d0c8d1b734cd4cfcd3fc3dbd2"
-    },
     "create-store-user": {
       "hasChanged": false,
-      "hash": "f252cfee15e480f7cd6694c4711ed843cd0ebf764c742f3ba4480b252de1d047"
+      "hash": "7c436cbdf55e8b6603218a9466cd1d4de101da18e07463df99f735ee70205cea"
     },
     "update-user-password": {
       "hasChanged": false,
