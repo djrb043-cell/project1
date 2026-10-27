@@ -1,9 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Users, Package, Download, RefreshCw, Plus, Search,
-  MessageCircle, Navigation, CheckCircle2, X, AlertCircle,
-  ChevronDown, Filter, Trash2, PhoneCall
-} from 'lucide-react';
+import { Users, Package, Download, RefreshCw, Plus, Search, MessageCircle, Navigation, CircleCheck as CheckCircle2, X, CircleAlert as AlertCircle, ChevronDown, Filter, Trash2, PhoneCall } from 'lucide-react';
 import Header from '@/components/Header';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { supabase, Order, Profile } from '@/lib/supabase';
@@ -13,6 +9,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import UserManagement from './UserManagement';
 import OrderAnalytics from '@/components/OrderAnalytics';
+import * as XLSX from 'xlsx';
 
 type Tab = 'orders' | 'users';
 
@@ -53,35 +50,33 @@ export default function AdminDashboard() {
     o.store_name.toLowerCase().includes(search.toLowerCase())
   );
 
-  function exportCSV() {
-    const header = [
-      'Numero do Pedido',
-      'Nome da Loja',
-      'Endereço',
-      'Complemento',
-      'Bairro',
-      'Cidade',
-      'Estado',
+  function exportXLSX() {
+    const rows = filtered.map((order, index) => ({
+      Pedido: `Pedido ${index + 1}`,
+      Nome: order.client_name,
+      Endereço: order.address,
+      Estado: 'Santa Catarina',
+      Cidade: order.city,
+      Bairro: order.neighborhood,
+      Complemento: order.notes ?? '',
+      Whatsapp: order.client_whatsapp,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows, {
+      header: ['Pedido', 'Nome', 'Endereço', 'Estado', 'Cidade', 'Bairro', 'Complemento', 'Whatsapp'],
+    });
+    worksheet['!cols'] = [
+      { wch: 14 },
+      { wch: 28 },
+      { wch: 42 },
+      { wch: 18 },
+      { wch: 28 },
+      { wch: 28 },
+      { wch: 32 },
+      { wch: 18 },
     ];
-    const rows = filtered.map(o => [
-      o.id.slice(0, 8),
-      o.store_name,
-      o.address,
-      o.notes ?? '',
-      o.neighborhood,
-      o.city,
-      'Santa Catarina',
-    ]);
-    const csv = [header, ...rows]
-      .map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';'))
-      .join('\r\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `giroloc-${filterDate || 'todos'}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Pedidos');
+    XLSX.writeFile(workbook, `giroloc-${filterDate || 'todos'}.xlsx`);
   }
 
   function whatsappLink(order: Order) {
@@ -242,7 +237,7 @@ export default function AdminDashboard() {
                 <RefreshCw size={15} />
                 Atualizar
               </button>
-              <button onClick={exportCSV} className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white transition">
+              <button onClick={exportXLSX} className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 text-white transition">
                 <Download size={15} />
                 Exportar XLSX
               </button>
