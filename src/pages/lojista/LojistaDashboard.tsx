@@ -139,13 +139,26 @@ export default function LojistaDashboard() {
 
         {tab === 'hoje' && <CutoffBanner />}
 
-        {/* Summary cards */}
-        <div className="flex justify-center">
-          <div className="w-full max-w-xs bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center transition-colors duration-300">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de pedidos com a GiroLoc</p>
-            <p className="text-3xl font-extrabold text-purple-700 dark:text-purple-300">{orders.length}</p>
+        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-950 via-purple-800 to-[#16002f] px-6 py-7 sm:px-8 sm:py-8 text-white shadow-xl shadow-purple-950/20">
+          <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-purple-500/25 blur-3xl" />
+          <div className="absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-fuchsia-500/15 blur-3xl" />
+          <div className="relative flex flex-col gap-7 sm:flex-row sm:items-center sm:justify-between">
+            <div className="max-w-xl">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-purple-200">Painel de entregas</p>
+              <h2 className="mt-3 text-2xl font-extrabold leading-tight sm:text-3xl">
+                Tudo que gira com a <span className="text-purple-300">GiroLoc</span>
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-purple-100/80">Acompanhe o volume total das suas entregas em um só lugar.</p>
+            </div>
+            <div className="flex shrink-0 items-center justify-center rounded-2xl bg-white px-5 py-3 shadow-lg shadow-black/20">
+              <img src="/assets/Logo_GiroLoc_com_Emblema_de_Movimento copy.png" alt="GiroLoc" className="h-12 w-auto object-contain sm:h-14" />
+            </div>
           </div>
-        </div>
+          <div className="relative mt-7 flex items-end gap-4 border-t border-white/15 pt-5">
+            <p className="text-5xl font-black tracking-tight text-white sm:text-6xl">{orders.length}</p>
+            <p className="pb-1 text-sm font-semibold uppercase tracking-[0.16em] text-purple-200">total de entregas<br />em todo o período</p>
+          </div>
+        </section>
 
         {tab === 'hoje' && <OrderForm onCreated={fetchOrders} />}
 
