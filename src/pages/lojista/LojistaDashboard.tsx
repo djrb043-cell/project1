@@ -5,7 +5,6 @@ import CutoffBanner from '@/components/CutoffBanner';
 import PriceTableModal from '@/components/PriceTableModal';
 import OrderForm from './OrderForm';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import OrderAnalytics from '@/components/OrderAnalytics';
 import { supabase, Order } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatCurrency, PAYMENT_LABELS, STATUS_LABELS, STATUS_COLORS } from '@/lib/pricing';
@@ -97,8 +96,6 @@ export default function LojistaDashboard() {
     return deliveredDate >= filterDateStart && deliveredDate <= filterDateEnd;
   });
   const visibleOrders = tab === 'historico' ? historyOrders : openOrders;
-  const pendingCount = openOrders.filter(o => o.status === 'pendente').length;
-  const totalFee = visibleOrders.reduce((s, o) => s + (o.fee ?? 0), 0);
 
   return (
     <div className="min-h-screen bg-purple-50 dark:bg-gray-950 transition-colors duration-300">
@@ -143,17 +140,11 @@ export default function LojistaDashboard() {
         {tab === 'hoje' && <CutoffBanner />}
 
         {/* Summary cards */}
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: 'Pedidos', value: orders.length, color: 'text-purple-700 dark:text-purple-300' },
-            { label: 'Pendentes', value: pendingCount, color: 'text-yellow-700 dark:text-yellow-400' },
-            { label: 'Total Taxas', value: formatCurrency(totalFee), color: 'text-green-700 dark:text-green-400', sm: true },
-          ].map(c => (
-            <div key={c.label} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-3.5 transition-colors duration-300">
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">{c.label}</p>
-              <p className={`font-bold ${c.color} ${c.sm ? 'text-base' : 'text-2xl'}`}>{c.value}</p>
-            </div>
-          ))}
+        <div className="flex justify-center">
+          <div className="w-full max-w-xs bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 text-center transition-colors duration-300">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total de pedidos com a GiroLoc</p>
+            <p className="text-3xl font-extrabold text-purple-700 dark:text-purple-300">{orders.length}</p>
+          </div>
         </div>
 
         {tab === 'hoje' && <OrderForm onCreated={fetchOrders} />}
@@ -211,7 +202,7 @@ export default function LojistaDashboard() {
           </div>
         )}
 
-        {tab === 'historico' && <OrderAnalytics orders={historyOrders} title="Suas entregas no período" />}
+
       </div>
       {showPriceTable && <PriceTableModal onClose={() => setShowPriceTable(false)} />}
     </div>
