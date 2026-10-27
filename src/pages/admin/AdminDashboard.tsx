@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [receivedBy, setReceivedBy] = useState('');
   const [savingDelivery, setSavingDelivery] = useState(false);
   const [deliveryError, setDeliveryError] = useState('');
-  const [collectingId, setCollectingId] = useState<string | null>(null);
+  const [collectingStoreId, setCollectingStoreId] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -128,17 +128,25 @@ export default function AdminDashboard() {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
   }
 
-  async function collectOrder(orderId: string) {
-    setCollectingId(orderId);
+  async function collectStoreOrders(storeId: string) {
+    const ordersToCollect = orders.filter(order =>
+      order.store_id === storeId && order.sent_to_giroloc && !order.collected_at
+    );
+    if (ordersToCollect.length === 0) return;
+    setCollectingStoreId(storeId);
     const collectedAt = new Date().toISOString();
+    const collectedBy = profile?.email ?? 'GiroLoc';
     const { error } = await supabase
       .from('orders')
-      .update({ collected_at: collectedAt, collected_by: profile?.email ?? 'GiroLoc' })
-      .eq('id', orderId);
-    setCollectingId(null);
+      .update({ collected_at: collectedAt, collected_by: collectedBy })
+      .eq('store_id', storeId)
+      .eq('sent_to_giroloc', true)
+      .is('collected_at', null);
+    setCollectingStoreId(null);
     if (error) return;
-    setOrders(prev => prev.map(order => order.id === orderId
-      ? { ...order, collected_at: collectedAt, collected_by: profile?.email ?? 'GiroLoc' }
+    const orderIds = new Set(ordersToCollect.map(order => order.id));
+    setOrders(prev => prev.map(order => orderIds.has(order.id)
+      ? { ...order, collected_at: collectedAt, collected_by: collectedBy }
       : order
     ));
   }
@@ -274,8 +282,9 @@ export default function AdminDashboard() {
                     order={order}
                     onDeliveryCheck={() => openDeliveryModal(order)}
                     onStatusChange={updateStatus}
-                    onCollect={() => collectOrder(order.id)}
-                    collecting={collectingId === order.id}
+                    onCollect={() => collectStoreOrders(order.store_id)}
+                    canCollect={filtered.findIndex(candidate => candidate.store_id === order.store_id) === filtered.indexOf(order)}
+                    collecting={collectingStoreId === order.store_id}
                     whatsappLink={whatsappLink(order)}
                     mapsLink={mapsLink(order)}
                     wazeLink={wazeLink(order)}
@@ -348,13 +357,14 @@ interface OrderCardProps {
   onDeliveryCheck: () => void;
   onStatusChange: (id: string, status: Order['status']) => void;
   onCollect: () => void;
+  canCollect: boolean;
   collecting: boolean;
   whatsappLink: string;
   mapsLink: string;
   wazeLink: string;
 }
 
-function OrderCard({ order, onDeliveryCheck, onStatusChange, onCollect, collecting, whatsappLink, mapsLink, wazeLink }: OrderCardProps) {
+function OrderCard({ order, onDeliveryCheck, onStatusChange, onCollect, canCollect, collecting, whatsappLink, mapsLink, wazeLink }: OrderCardProps) {
   const [showStatus, setShowStatus] = useState(false);
   const timeStr = new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
@@ -425,13 +435,13 @@ function OrderCard({ order, onDeliveryCheck, onStatusChange, onCollect, collecti
         >
           <Navigation size={14} /> Waze
         </a>
-        {order.sent_to_giroloc && !order.collected_at && (
+        {canCollect && order.sent_to_giroloc && !order.collected_at && (
           <button
             onClick={onCollect}
             disabled={collecting}
             className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/40 disabled:opacity-60 transition border border-orange-200 dark:border-orange-800 font-medium"
           >
-            <Package size={14} /> {collecting ? 'Coletando…' : 'Coletar'}
+            <Package size={14} /> {collecting ? 'Coletando loja…' : 'Coletar pedidos da loja'}
           </button>
         )}
         {order.status !== 'entregue' && (
