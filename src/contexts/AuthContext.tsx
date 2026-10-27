@@ -43,11 +43,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    // Verificar se existe um login ativo salvo no localStorage (para a nossa autenticação direta)
+    const savedProfile = localStorage.getItem('giroloc_custom_profile');
+    if (savedProfile) {
+      try {
+        const p = JSON.parse(savedProfile) as Profile;
+        setProfile(p);
+        setUser({ id: p.id, email: p.email } as User);
+        setSession({ user: { id: p.id, email: p.email } } as unknown as Session);
+      } catch (e) {
+        localStorage.removeItem('giroloc_custom_profile');
+      }
+    }
+
     supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
       if (s?.user) {
+        setSession(s);
+        setUser(s?.user ?? null);
         fetchProfile(s.user.id).finally(() => setLoading(false));
+      } else if (!savedProfile) {
+        setLoading(false);
       } else {
         setLoading(false);
       }
@@ -55,14 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       (async () => {
-        setSession(s);
-        setUser(s?.user ?? null);
         if (s?.user) {
+          setSession(s);
+          setUser(s?.user ?? null);
           await fetchProfile(s.user.id);
-        } else {
-          setProfile(null);
+          setLoading(false);
         }
-        setLoading(false);
       })();
     });
 
@@ -70,13 +83,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function signIn(email: string, password: string): Promise<string | null> {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return error.message;
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Tentar login normal pelo Supabase Auth (caso seja o Admin principal)
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+    if (!authError && authData.session) {
+      return null;
+    }
+
+    // 2. Se falhar no Auth, procurar diretamente na tabela `profiles` (para as lojas criadas pelo painel)
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', cleanEmail)
+      .maybeSingle();
+
+    if (profileError || !profileData) {
+      return 'E-mail ou senha incorretos. Verifique seus dados.';
+    }
+
+    // Verificar se a senha confere
+    if ((profileData as any).password !== password) {
+      return 'E-mail ou senha incorretos. Verifique seus dados.';
+    }
+
+    // Verificar se a conta está ativa
+    if (profileData.active === false) {
+      return 'Esta conta está desativada.';
+    }
+
+    // Login bem-sucedido via profiles: salvar no localStorage e atualizar o estado
+    localStorage.setItem('giroloc_custom_profile', JSON.stringify(profileData));
+    setProfile(profileData as Profile);
+    setUser({ id: profileData.id, email: profileData.email } as User);
+    setSession({ user: { id: profileData.id, email: profileData.email } } as unknown as Session);
+
     return null;
   }
 
   async function signOut() {
+    localStorage.removeItem('giroloc_custom_profile');
     await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
+    setProfile(null);
   }
 
   return (
