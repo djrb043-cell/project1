@@ -1,6 +1,10 @@
 {
   "projectId": "72441844",
   "functions": {
+    "bootstrap-admin": {
+      "hasChanged": false,
+      "hash": "6927d17e67dfea1fd98e2d0d68c494f789a30e3d0c8d1b734cd4cfcd3fc3dbd2"
+    },
     "create-store-user": {
       "hasChanged": false,
       "hash": "f252cfee15e480f7cd6694c4711ed843cd0ebf764c742f3ba4480b252de1d047"
@@ -8,10 +12,6 @@
     "update-user-password": {
       "hasChanged": false,
       "hash": "9a85d4bbfea1b8d1b9d9662ace5cd56982007e4d28c6b6d8792b482f93c4bf85"
-    },
-    "bootstrap-admin": {
-      "hasChanged": false,
-      "hash": "1278b4dca0382d677c654a1267a10d56b28b99a1004056552425aaa73f937cba"
     }
   }
 }

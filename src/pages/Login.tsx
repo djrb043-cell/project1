@@ -27,8 +27,7 @@ export default function Login() {
     if (err) setError('E-mail ou senha incorretos. Verifique seus dados.');
   }
 
-  async function handleBootstrap(e: FormEvent) {
-    e.preventDefault();
+  async function handleBootstrap() {
     setBootstrapError('');
     setBootstrapSuccess('');
     if (bootstrapPassword.length < 8) {
@@ -47,10 +46,15 @@ export default function Login() {
         setBootstrapError(result.error ?? 'Não foi possível criar a conta.');
         return;
       }
-      setEmail('robsonjds1003@gmail.com');
-      setPassword(bootstrapPassword);
+      const signInError = await signIn('robsonjds1003@gmail.com', bootstrapPassword);
+      if (signInError) {
+        setBootstrapError('A conta foi criada, mas o login automático falhou. Entre com a senha informada.');
+        setEmail('robsonjds1003@gmail.com');
+        setPassword(bootstrapPassword);
+        return;
+      }
       setBootstrapPassword('');
-      setBootstrapSuccess('Conta criada. Agora você pode entrar com sua senha.');
+      setBootstrapSuccess('Conta criada e login realizado.');
     } catch {
       setBootstrapError('Não foi possível conectar ao serviço de cadastro.');
     } finally {
@@ -169,7 +173,7 @@ export default function Login() {
               </button>
 
               {showBootstrap && (
-                <form onSubmit={handleBootstrap} className="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 p-4 flex flex-col gap-3">
+                <div className="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/30 p-4 flex flex-col gap-3">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">Criar conta de administrador</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cadastro temporário para o primeiro acesso.</p>
@@ -178,10 +182,10 @@ export default function Login() {
                   <input type="password" required minLength={8} value={bootstrapPassword} onChange={e => setBootstrapPassword(e.target.value)} placeholder="Crie uma senha" className="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2.5 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-800" />
                   {bootstrapError && <p className="text-xs text-red-700 dark:text-red-400">{bootstrapError}</p>}
                   {bootstrapSuccess && <p className="text-xs text-green-700 dark:text-green-400">{bootstrapSuccess}</p>}
-                  <button type="submit" disabled={bootstrapLoading} className="w-full bg-purple-700 hover:bg-purple-600 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg transition">
+                  <button type="button" onClick={() => void handleBootstrap()} disabled={bootstrapLoading} className="w-full bg-purple-700 hover:bg-purple-600 disabled:opacity-60 text-white font-semibold py-2.5 rounded-lg transition">
                     {bootstrapLoading ? 'Criando conta…' : 'Criar conta'}
                   </button>
-                </form>
+                </div>
               )}
             </form>
           </div>

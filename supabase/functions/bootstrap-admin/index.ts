@@ -27,12 +27,12 @@ Deno.serve(async (req: Request) => {
 
     const { data: admins, error: adminCheckError } = await supabaseAdmin
       .from("profiles")
-      .select("id")
+      .select("id, email")
       .eq("role", "admin")
       .limit(1);
 
     if (adminCheckError) throw adminCheckError;
-    if (admins && admins.length > 0) {
+    if (admins && admins.length > 0 && admins[0].email !== email) {
       return new Response(JSON.stringify({ error: "A configuração inicial já foi concluída." }), {
         status: 409,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
