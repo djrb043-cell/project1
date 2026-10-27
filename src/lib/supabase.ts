@@ -36,6 +36,9 @@ export interface Order {
   payment_method: 'pago_loja' | 'receber_loja';
   status: 'pendente' | 'em_rota' | 'entregue' | 'nao_entregue';
   received_by: string | null;
+  sent_to_giroloc: boolean;
+  collected_at: string | null;
+  collected_by: string | null;
   floripa_distance_km: number | null;
   notes: string | null;
   created_at: string;
