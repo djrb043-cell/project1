@@ -3,10 +3,6 @@ import { Plus, UserX, UserCheck, X, AlertCircle, Store, RefreshCw, KeyRound } fr
 import { supabase, Profile } from '@/lib/supabase';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
-// Colunas lidas na listagem. A coluna "password" NUNCA é selecionada,
-// para que ela não trafegue de volta para o navegador.
-const PROFILE_COLUMNS = 'id, store_name, email, role, active, created_at';
-
 export default function UserManagement() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,9 +22,9 @@ export default function UserManagement() {
     setLoading(true);
     const { data, error } = await supabase
       .from('profiles')
-      .select(PROFILE_COLUMNS)
+      .select('*')
       .order('created_at', { ascending: false });
-    if (!error && data) setProfiles(data as unknown as Profile[]);
+    if (!error && data) setProfiles(data as Profile[]);
     setLoading(false);
   }
 
@@ -37,96 +33,73 @@ export default function UserManagement() {
   async function createStore() {
     setFormError('');
     setFormSuccess('');
-
-    const storeName = form.store_name.trim();
-    const email = form.email.trim().toLowerCase();
-    const password = form.password;
-
-    if (!storeName || !email || !password.trim()) {
+    if (!form.store_name.trim() || !form.email.trim() || !form.password.trim()) {
       setFormError('Preencha todos os campos.');
       return;
     }
-    if (password.length < 6) {
-      setFormError('A senha deve ter pelo menos 6 caracteres.');
-      return;
-    }
-
     setCreating(true);
-
-    // Insere diretamente na tabela profiles (sem Edge Function).
-    // Se a coluna "id" tiver default gen_random_uuid(), pode remover a linha do id.
-    const { data, error } = await supabase
-      .from('profiles')
-      .insert({
-        id: crypto.randomUUID(),
-        store_name: storeName,
-        email,
-        password,
-        role: 'lojista',
-        active: true,
-      })
-      .select(PROFILE_COLUMNS)
-      .single();
-
-    setCreating(false);
-
-    if (error) {
-      if (error.code === '23505') {
-        setFormError('Já existe uma loja cadastrada com este e-mail.');
-      } else {
-        setFormError(error.message || 'Erro ao criar a loja.');
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-store-user`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          email: form.email.trim(),
+          password: form.password,
+          store_name: form.store_name.trim(),
+        }),
       }
+    );
+    const json = await res.json();
+    setCreating(false);
+    if (!res.ok || json.error) {
+      setFormError(json.error ?? 'Erro ao criar a loja.');
       return;
     }
-
-    setFormSuccess(`Loja "${storeName}" criada com sucesso!`);
+    setFormSuccess(`Loja "${form.store_name}" criada com sucesso!`);
     setForm({ store_name: '', email: '', password: '' });
-    if (data) {
-      setProfiles(prev => [data as unknown as Profile, ...prev]);
-    } else {
-      fetchProfiles();
-    }
+    fetchProfiles();
   }
 
   async function toggleActive(p: Profile) {
-    const nextActive = !p.active;
-    // Atualização otimista, com reversão em caso de erro
-    setProfiles(prev => prev.map(x => x.id === p.id ? { ...x, active: nextActive } : x));
-    const { error } = await supabase
-      .from('profiles')
-      .update({ active: nextActive })
-      .eq('id', p.id);
-    if (error) {
-      setProfiles(prev => prev.map(x => x.id === p.id ? { ...x, active: p.active } : x));
-    }
+    await supabase.from('profiles').update({ active: !p.active }).eq('id', p.id);
+    setProfiles(prev => prev.map(x => x.id === p.id ? { ...x, active: !x.active } : x));
   }
 
   async function updatePassword() {
     if (!pwModalUser) return;
     setPwError('');
     setPwSuccess('');
-
     if (!newPassword.trim()) {
       setPwError('Digite a nova senha.');
       return;
     }
-    if (newPassword.length < 6) {
-      setPwError('A senha deve ter pelo menos 6 caracteres.');
-      return;
-    }
-
     setPwSaving(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ password: newPassword })
-      .eq('id', pwModalUser.id);
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-user-password`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          user_id: pwModalUser.id,
+          password: newPassword,
+        }),
+      }
+    );
+    const json = await res.json();
     setPwSaving(false);
-
-    if (error) {
-      setPwError(error.message || 'Erro ao alterar a senha.');
+    if (!res.ok || json.error) {
+      setPwError(json.error ?? 'Erro ao alterar a senha.');
       return;
     }
-
     setPwSuccess('Senha alterada com sucesso!');
     setNewPassword('');
     setTimeout(() => {
